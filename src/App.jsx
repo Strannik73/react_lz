@@ -1,66 +1,55 @@
 import { useState } from 'react'
-import { MovieCard } from './MovieCard'
-import { MOVIES } from './movies'
-import { useDebounce } from './hooks/useDeb'
+import { useNavigate } from 'react-router-dom'
+import { FavBut } from './FavBut'
+import { Modal } from './components/ui/Modal'
 import { useTheme } from './hooks/useTheme'
 
-function App() {
-  const {theme, toggleTheme} = useTheme()
+export function MovieCard({ id, image, rating, mp4 }) {
+  const [isOpenTrailer, setIsOpenTrailer] = useState(false)
+  const navigate = useNavigate()
+  const { theme } = useTheme()
 
-  const [searchTerm, setSearchTerm] = useState('')
-  const debouncedSearch = useDebounce(searchTerm, 600)
+  const cardBg = theme === 'dark' ? 'bg-neutral-900' : 'bg-white'
+  const cardText = theme === 'dark' ? 'text-white' : 'text-black'
 
-  const movies = MOVIES.filter(movie => movie.name.toLowerCase().includes(debouncedSearch.toLowerCase()))
-  
   return (
-    <div className='min-h-screen w-full bg-white dark:bg-black
-    text-black dark:text-white px-20 py-5'>
-      <header className='mb-10 flex items-center justify-between'>
-        <img 
-          src="/kino.jpg"
-          width={250}
-          alt='ci'
-          // style={}
-          className='h-24 w-25 rounded-4xl'
-        />
+    <button
+      onClick={() => navigate(`/movie/${id}`)}
+      className={`relative w-[250px] rounded-2xl overflow-hidden shadow-lg hover:scale-105 transition-transform will-change-transform duration-300 ${cardBg} ${cardText}`}
+    >
+      {isOpenTrailer && (
+        <Modal onClose={() => setIsOpenTrailer(false)}>
+          <div className="w-[77vw] max-w-4xl h-[35vh]">
+            <video
+              src={mp4}
+              controls
+              muted
+              autoPlay
+              className="w-full h-full object-contain"
+              onError={(e) => console.log('VIDEO ERROR', e)}
+            />
+          </div>
+        </Modal>
+      )}
 
-        <div>
-          <input type="search"
-            value={searchTerm}
-            onChange={e => {
-              setSearchTerm(e.target.value)
-            }}
-            placeholder="Поиск..."
-            className="border border-black/15 dark:border-white/15 px-2 py-1 rounded outline-0"/>
-          
-          <button
-            onClick={toggleTheme}
-            className='text-sm px-3 py-1 rounded border border-white/20
-            dark:border-white/10 hover:bg-white hover:text-black
-            dark:hover:bg-white/10 transition w-20 ml-2'
-          >
-            {theme === 'dark' ? '☀ Light' : '☽ Dark'}
-          </button>
-        </div>
-      </header>
-      <main className="flex gap-6">
-        {movies.length ? (
-          movies.map(movie =>(
-            <MovieCard 
-              key={movie.name}
-              image={movie.image} 
-              rating={movie.rating}
-              mp4={movie.mp4}
-            /> 
-          )) 
-        ): (<p>Фильмы не найдены </p>)}
-        
-        
-                 
-      </main>
-    </div>
+      <img src={image} alt="Movie Poster" className="w-full h-auto object-cover" />
+
+      <div className="absolute top-2 right-2 z-10 px-1 py-1 flex items-center gap-1">
+        <FavBut />
+        <button
+          className="btn"
+          onClick={(e) => {
+            e.stopPropagation() // чтобы не сработал navigate при клике на трейлер
+            setIsOpenTrailer(true)
+          }}
+        >
+          ▶
+        </button>
+      </div>
+
+      <div className="absolute bottom-0 left-0 w-full bg-gradient-to-t from-black/80 to-transparent p-2 text-sm font-semibold">
+        Рейтинг: {rating}
+      </div>
+    </button>
   )
-
 }
-
-export default App
